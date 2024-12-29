@@ -1,0 +1,66 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS resource fork files
+._*
+
+# Python cache files
+*.py[cod]
+__pycache__/
+*.so
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Environment variables and secrets
+.env
+.env.*
+
+# IDE/Editor settings
+.idea/
+.vscode/
+*.swp
+*.iml
+
+# Virtual environment
+venv-3.10/
+env/
+.venv/
+
+# Build and distribution files
+build/
+dist/
+*.egg-info/
+*.egg
+*.pyc
+pip-wheel-metadata/
+
+# JetBrains IDEs
+*.ipr
+*.iws
+*.idea/
+out/
+
+# Node.js assets (if any)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Docker files
+docker-compose.override.yml
+.docker/
+docker-compose.yml.backup
+
+# Project-specific
+**/__pycache__/
+*.class
+*.log
+.coverage
+*.out
+*.snap
+*.tox
