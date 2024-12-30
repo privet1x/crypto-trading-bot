@@ -56,6 +56,13 @@ def calculate_indicators(df, timeframe):
     # Volatility (Average True Range)
     df["atr"] = ta.volatility.average_true_range(df["high"], df["low"], df["close"], window=lookback)
 
+    # Bollinger Bands Width
+    bollinger = ta.volatility.BollingerBands(df["close"], window=lookback)
+    df["bb_width"] = bollinger.bollinger_hband() - bollinger.bollinger_lband()
+
+    # EMA
+    df["ema"] = ta.trend.ema_indicator(df["close"], window=lookback)
+
     return df
 
 
