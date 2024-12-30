@@ -30,6 +30,7 @@ __pycache__/
 venv-3.10/
 env/
 .venv/
+myenv
 
 # Build and distribution files
 build/
