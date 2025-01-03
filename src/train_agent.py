@@ -1,12 +1,10 @@
 import os
 import datetime
 import pandas as pd
-from finrl.meta.env_cryptocurrency_trading.env_btc_ccxt import BitcoinEnv
 from stable_baselines3.common.vec_env import DummyVecEnv
 from finrl.agents.stablebaselines3.models import DRLAgent
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3 import PPO
-from src.env_wrapper import BitcoinEnvWrapper
+from src.MyBitcoinEnv import MyBitcoinEnv
 
 # Configuration
 DATA_FILES = {
@@ -14,15 +12,15 @@ DATA_FILES = {
     "5m": "../data/processed_btcusdt_5m.csv",
     "15m": "../data/processed_btcusdt_15m.csv"
 }
-TIMEFRAME = "15m"  # Choose timeframe: "1m", "5m", or "15m"
+TIMEFRAME = "5m"  # Choose timeframe: "1m", "5m", or "15m"
 MODEL_PATH = f"../models/drl_agent_{TIMEFRAME}.zip"
 
 # Define date ranges
-TRAIN_START_DATE = "2024-01-01"
-TRAIN_END_DATE = "2024-10-14"
+TRAIN_START_DATE = "2024-08-01"
+TRAIN_END_DATE = "2024-11-14"
 VAL_START_DATE = "2024-12-02"
 VAL_END_DATE = "2024-12-03"
-TEST_START_DATE = "2024-10-15"
+TEST_START_DATE = "2024-12-25"
 TEST_END_DATE = "2024-12-30"
 
 
@@ -57,46 +55,92 @@ def split_data(df):
 
 
 def train_agent(env, model_path):
-    """Train a DRLAgent using PPO."""
-    wrapped_env = DummyVecEnv([lambda: BitcoinEnvWrapper(env)])  # Wrap with Gym and VecEnv
+    """
+    Train a DRLAgent using PPO and FinRL's DRLAgent class.
 
-    agent = DRLAgent(env=wrapped_env)
+    Parameters:
+        env: The environment object wrapped with GymBitcoinEnvWrapper.
+        model_path: The file path where the trained model should be saved.
 
+    Returns:
+        trained_model: The trained DRL model.
+    """
+    # Initialize the DRLAgent with the wrapped environment
+    agent = DRLAgent(env)
+
+    # Configure the model
     model_kwargs = {
         "learning_rate": 0.005,  # Set a higher learning rate
         "batch_size": 128,  # Optionally adjust batch size
     }
-    model = agent.get_model("ppo", model_kwargs=model_kwargs)  # Choose PPO
+    model = agent.get_model(
+        model_name="ppo",  # Using PPO algorithm
+        model_kwargs=model_kwargs,  # Pass model configuration
+        tensorboard_log="../logs/"  # Path to store TensorBoard logs
+    )
 
-    tb_log_name = "ppo_training"  # Specify the TensorBoard log name
-    trained_model = agent.train_model(model=model, total_timesteps=35000, tb_log_name=tb_log_name)
+    # Train the model
+    tb_log_name = "ppo_training"  # Specify TensorBoard log name
+    trained_model = DRLAgent.train_model(
+        model=model,
+        tb_log_name=tb_log_name,
+        total_timesteps=35000  # Define the number of timesteps
+    )
+
+    # Save the trained model
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     trained_model.save(model_path)
+    print(f"Model saved at {model_path}")
     return trained_model
 
 
 def evaluate_agent(env, model_path):
-    """Evaluate a trained DRLAgent."""
-    # Load the trained model
-    model = PPO.load(model_path)
+    """
+    Evaluate a trained DRLAgent using Stable-Baselines3's evaluate_policy function.
 
-    wrapped_env = DummyVecEnv([lambda: BitcoinEnvWrapper(env)])  # Wrap the environment
-    mean_reward, std_reward = evaluate_policy(model, wrapped_env, n_eval_episodes=10)
+    Parameters:
+        env: The environment object wrapped with GymBitcoinEnvWrapper.
+        model_path: The file path to the saved model.
+
+    Returns:
+        mean_reward: The mean reward over evaluation episodes.
+        std_reward: The standard deviation of the reward over evaluation episodes.
+    """
+    # Load the trained model
+    agent = DRLAgent(env)
+    model = agent.get_model(
+        model_name="ppo",  # Specify the same model type as used in training
+    )
+    model.load(model_path)  # Load the saved model from the path
+
+    # Wrap the environment in DummyVecEnv if not already wrapped
+    if not isinstance(env, DummyVecEnv):
+        vec_env = DummyVecEnv([lambda: env])
+    else:
+        vec_env = env
+
+    # Use evaluate_policy to compute the mean and standard deviation of rewards
+    mean_reward, std_reward = evaluate_policy(model, vec_env, n_eval_episodes=10, render=False)
+
     print(f"Evaluation results - Mean Reward: {mean_reward}, Std Reward: {std_reward}")
     return mean_reward, std_reward
+
 
 
 if __name__ == "__main__":
     # Load data
     df = load_processed_data(DATA_FILES[TIMEFRAME])
 
-    train_data, _, test_data = split_data(df)  # Validation split is skipped
+    # Split data into training and testing
+    train_data, _, test_data = split_data(df)
+    # Validation split is skipped because BitcoinEnv doesnt provide validation mode
 
     # Extract price and technical data for training
     train_price_data = train_data[["close"]].values
     train_tech_data = train_data[["sma", "rsi", "macd", "macd_signal", "atr", "bb_width", "ema"]].values
 
-    env_train = BitcoinEnv(
+    # Initialize training environment
+    env_train = MyBitcoinEnv(
         price_ary=train_price_data,
         tech_ary=train_tech_data,
         mode="train"
@@ -109,7 +153,8 @@ if __name__ == "__main__":
     test_price_data = test_data[["close"]].values
     test_tech_data = test_data[["sma", "rsi", "macd", "macd_signal", "atr", "bb_width", "ema"]].values
 
-    env_test = BitcoinEnv(
+    # Initialize testing environment
+    env_test = MyBitcoinEnv(
         price_ary=test_price_data,
         tech_ary=test_tech_data,
         mode="test",
@@ -119,5 +164,8 @@ if __name__ == "__main__":
         end=test_price_data.shape[0]
     )
 
+    # Evaluate the trained model
     evaluate_agent(env=env_test, model_path=MODEL_PATH)
+
+
 
