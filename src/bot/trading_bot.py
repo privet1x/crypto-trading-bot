@@ -32,9 +32,9 @@ client = HTTP(api_key=API_KEY, api_secret=API_SECRET, testnet=True)
 
 # Risk management configuration
 
-TRADE_AMOUNT = calculate_trade_amount(client,  "BTCUSDT",0.01)  # 1% of your USDT balance
+TRADE_AMOUNT = calculate_trade_amount(client,  "BTCUSDT",0.02)  # 1% of your USDT balance
 TRADE_AMOUNT = round(TRADE_AMOUNT, 3)
-RUN_TIME_SECONDS = 10  # Run for 120sec
+RUN_TIME_SECONDS = 60  # Run for 120sec
 
 
 def place_trade(client, side, qty, stop_loss=None, take_profit=None):

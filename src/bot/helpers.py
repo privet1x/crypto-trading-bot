@@ -9,9 +9,6 @@ def calculate_trade_amount(client, symbol, percentage):
     # Fetch wallet balance for Unified Trading Account
     response = client.get_wallet_balance(accountType="UNIFIED")
 
-    # Debug: Print the wallet balance response
-    print("Wallet Balance Response:", response)
-
     # Extract the total wallet balance
     try:
         account_balance = float(response["result"]["list"][0]["totalWalletBalance"])  # Use totalWalletBalance directly
@@ -20,7 +17,6 @@ def calculate_trade_amount(client, symbol, percentage):
 
     # Fetch the latest BTC price
     kline_response = client.get_kline(symbol=symbol, interval="1")
-    print("K-line Response:", kline_response)
 
     try:
         # Parse the 'list' key in the response and get the last close price
@@ -84,7 +80,6 @@ def fetch_market_data(client, symbol, interval, limit=100):
     kline = client.get_kline(symbol=symbol, interval=str(interval), limit=limit)
     if "result" in kline and "list" in kline["result"]:
         price_data = np.array([float(candle[4]) for candle in kline["result"]["list"]])
-        print("myprice data", price_data.shape)
         return price_data
     else:
         raise ValueError(f"Unexpected K-line response structure: {kline}")
