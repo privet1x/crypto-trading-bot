@@ -31,10 +31,11 @@ TIMEFRAMES = {
 client = HTTP(api_key=API_KEY, api_secret=API_SECRET, testnet=True)
 
 # Risk management configuration
+PERCENTAGE_PORTFOLIO_FOR_TRADING = 0.02
 
-TRADE_AMOUNT = calculate_trade_amount(client,  "BTCUSDT",0.02)  # 1% of your USDT balance
+TRADE_AMOUNT = calculate_trade_amount(client,  "BTCUSDT",PERCENTAGE_PORTFOLIO_FOR_TRADING)  # 1% of your USDT balance
 TRADE_AMOUNT = round(TRADE_AMOUNT, 3)
-RUN_TIME_SECONDS = 60  # Run for 120sec
+RUN_TIME_SECONDS = 60  # Run for 60sec
 
 
 def place_trade(client, side, qty, stop_loss=None, take_profit=None):
@@ -123,5 +124,5 @@ if __name__ == "__main__":
             close_all_positions(client)
             break  # Exit the loop and stop the bot
 
-        # Optional: Add a sleep time between iterations to avoid frequent API calls
+        # sleep time between iterations to avoid frequent API calls
         time.sleep(10)  # Wait for 1 minute before the next iteration
